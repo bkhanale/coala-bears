@@ -180,6 +180,9 @@ before_install:
            "$(cat bear-requirements.txt requirements.txt)"
            > requirements.txt
 
+install:
+  - pip install --no-cache-dir -r requirements.txt
+
 before_script:
   - mv requirements.orig requirements.txt
   - .ci/deps.coala-bears.sh
