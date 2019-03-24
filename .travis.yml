@@ -175,10 +175,13 @@ before_install:
   # https://github.com/coala/coala/issues/3183
   - cp requirements.txt requirements.orig
   - printf '%s\n%s\n%s\n'
+           "$(cat bear-requirements.txt requirements.txt)"
            "$(cat test-requirements.txt)"
            "$(grep -v '^-r' docs-requirements.txt)"
-           "$(cat bear-requirements.txt requirements.txt)"
            > requirements.txt
+
+install:
+  - pip install --no-cache-dir -r requirements.txt
 
 before_script:
   - mv requirements.orig requirements.txt

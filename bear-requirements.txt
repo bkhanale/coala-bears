@@ -1,3 +1,4 @@
+nbformat~=4.1
 HTTPolice~=0.5.2
 aenum~=2.0.8
 apertium-lint~=0.29
@@ -21,7 +22,6 @@ lxml==3.6.0
 memento-client~=0.6.1
 munkres3~=1.0
 mypy==0.590
-nbformat~=4.1
 nltk~=3.2
 proselint~=0.7.0
 pycodestyle~=2.2
