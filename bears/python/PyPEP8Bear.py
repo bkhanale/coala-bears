@@ -2,6 +2,7 @@ import autopep8
 import logging
 
 from bears.python.PycodestyleBear import PycodestyleBear
+from coala_utils.ContextManagers import prepare_file
 from coalib.bearlib.spacing.SpacingHelper import SpacingHelper
 from coalib.bears.LocalBear import LocalBear
 from coalib.results.Diff import Diff
@@ -38,35 +39,36 @@ class PyPEP8Bear(LocalBear):
         if not max_line_length:
             max_line_length = sys.maxsize
 
-        queue = Queue()
         section = Section('')
         section.append(Setting('max_line_length', max_line_length))
+        pycodestyle = PycodestyleBear(section, Queue())
+        with prepare_file(file, None) as (lines, fname):
+            with execute_bear(pycodestyle,
+                              fname, lines,) as results:
 
-        with execute_bear(PycodestyleBear(section, queue),
-                          filename, file,) as results:
+                logging.debug(len(results))
+                for result in results:
+                    start_line = result.affected_code[0].start.line
+                    end_line = result.affected_code[0].end.line
+                    # start_column = result.affected_code[0].start.column
+                    # end_column = result.affected_code[0].end.column
+                    rule = result.origin.split(' ')[1][1:-1]
 
-            for result in results:
-                start_line = result.affected_code[0].start.line
-                end_line = result.affected_code[0].end.line
-                # start_column = result.affected_code[0].start.column
-                # end_column = result.affected_code[0].end.column
-                rule = result.origin.split(' ')[1][1:-1]
+                    options = {'select': (rule,),
+                               'max_line_length': max_line_length,
+                               'indent_size': indent_size,
+                               'line_range': [start_line, end_line + 1]}
 
-                options = {'select': (rule,),
-                           'max_line_length': max_line_length,
-                           'indent_size': indent_size,
-                           'line_range': [start_line, end_line + 1]}
+                    corrected = autopep8.fix_code(''.join(file),
+                                                  apply_config=False,
+                                                  options=options).splitlines(True)
 
-                corrected = autopep8.fix_code(''.join(file),
-                                              apply_config=False,
-                                              options=options).splitlines(True)
+                    diffs = Diff.from_string_arrays(file, corrected).split_diff()
 
-                diffs = Diff.from_string_arrays(file, corrected).split_diff()
+                    logging.debug(corrected)
 
-                logging.debug(corrected)
-
-                for diff in diffs:
-                    yield Result(self,
-                                 result.message,
-                                 affected_code=(diff.range(filename),),
-                                 diffs={filename: diff})
+                    for diff in diffs:
+                        yield Result(self,
+                                     result.message,
+                                     affected_code=(diff.range(filename),),
+                                     diffs={filename: diff})
